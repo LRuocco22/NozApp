@@ -4,18 +4,16 @@ from sklearn.cluster import KMeans
 import pickle
 
 # Percorsi dei file
-movies_path = './movielens/movies.csv'
-links_path = './movielens/links.csv'
-genome_scores_path = './movielens/genome-scores.csv'
-genome_tags_path = './movielens/genome-tags.csv'
-ratings_path = './movielens/ratings.csv'
+movies_path = '../movielens/movies.csv'
+links_path = '../movielens/links.csv'
+ratings_path = '../movielens/ratings.csv'
+tags_path = '../movielens/tags.csv'
 
 # Step 1: Caricamento dei file
 movies_df = pd.read_csv(movies_path)
 links_df = pd.read_csv(links_path)
-genome_scores_df = pd.read_csv(genome_scores_path)
-genome_tags_df = pd.read_csv(genome_tags_path)
 ratings_df = pd.read_csv(ratings_path)
+tags_df = pd.read_csv(tags_path)
 
 
 ratings_info_by_id = ratings_df.groupby('movieId').agg(
@@ -31,6 +29,12 @@ genres_split = movies_df['genres'].str.get_dummies('|')
 #uniamo i generi binari con il dataframe movies. axis=1 significa unione per colonna
 movies_df = pd.concat([movies_df, genres_split], axis=1)
 
+
+tags_df['tag'] = tags_df['tag'].astype(str)
+tags_aggregated = tags_df.groupby('movieId')['tag'].apply(lambda x: '|'.join(x)).reset_index()
+tags_aggregated.rename(columns={'tag': 'tags'}, inplace=True)
+movies_df = movies_df.merge(tags_aggregated, on='movieId', how='left')
+movies_df['tags'] = movies_df['tags'].fillna('')
 
 # Riempimento dei valori mancanti nelle colonne average_rating e rating_count
 movies_df['average_rating'] = movies_df['average_rating'].fillna(0)
