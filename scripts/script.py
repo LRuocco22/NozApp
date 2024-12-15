@@ -2,90 +2,51 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 import pickle
+from sklearn.preprocessing import MultiLabelBinarizer
 
 # Percorsi dei file
 movies_path = '../movielens/movies.csv'
 links_path = '../movielens/links.csv'
-ratings_path = '../movielens/ratings.csv'
-tags_path = '../movielens/tags.csv'
+genome_scores_path = '../genome-scores.csv'
+genome_tags_path = '../genome-tags.csv'
 
 # Step 1: Caricamento dei file
 movies_df = pd.read_csv(movies_path)
 links_df = pd.read_csv(links_path)
-ratings_df = pd.read_csv(ratings_path)
-tags_df = pd.read_csv(tags_path)
+genome_scores_df = pd.read_csv(genome_scores_path)
+genome_tags_df = pd.read_csv(genome_tags_path)
 
 
-ratings_info_by_id = ratings_df.groupby('movieId').agg(
-    average_rating=('rating', 'mean'),  # Calcolo della valutazione media tra tutte le valutazioni dei diversi utenti
-    rating_count=('rating', 'count')   # Numero di valutazioni per ogni film
-)
+# Step 2: Unione dei dataset
+genome_scores_with_tags = genome_scores_df.merge(genome_tags_df, on="tagId")
+movies_with_tags = movies_df.merge(genome_scores_with_tags, on="movieId")
+final_dataset = movies_with_tags.merge(links_df[['movieId', 'tmdbId']], on="movieId")
 
-movies_df = movies_df.merge(ratings_info_by_id, on='movieId', how='left') # effettuiamo il merge con join left su movieId
+# Step 3: Prepara i dati per clustering
+movies_df['genres_list'] = movies_df['genres'].apply(lambda x: x.split('|'))
+mlb = MultiLabelBinarizer()
+genres_encoded = pd.DataFrame(mlb.fit_transform(movies_df['genres_list']),
+                              columns=mlb.classes_, index=movies_df['movieId'])
 
-# generi in colonne binarie (one-hot encoding)
-genres_split = movies_df['genres'].str.get_dummies('|')
+# Media dei punteggi di rilevanza per tag
+tag_relevance = final_dataset.groupby(['movieId', 'tag'])['relevance'].mean().unstack(fill_value=0)
 
-#uniamo i generi binari con il dataframe movies. axis=1 significa unione per colonna
-movies_df = pd.concat([movies_df, genres_split], axis=1)
+# Step 4: Concatenazione generi e tag
+feature_matrix = pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).fillna(0)
+feature_matrix = feature_matrix.loc[feature_matrix.index.intersection(movies_df['movieId'])]
 
+# Step 5: Clustering con KMeans
+num_clusters = 3
+kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+clusters = kmeans.fit_predict(feature_matrix)
 
-tags_df['tag'] = tags_df['tag'].astype(str)
-tags_aggregated = tags_df.groupby('movieId')['tag'].apply(lambda x: '|'.join(x)).reset_index()
-tags_aggregated.rename(columns={'tag': 'tags'}, inplace=True)
-movies_df = movies_df.merge(tags_aggregated, on='movieId', how='left')
-movies_df['tags'] = movies_df['tags'].fillna('')
+# Associare i cluster ai film
+movies_with_clusters = movies_df.set_index('movieId').join(links_df.set_index('movieId'), how='inner')
+movies_with_clusters['cluster'] = pd.Series(clusters, index=feature_matrix.index)
 
-# Riempimento dei valori mancanti nelle colonne average_rating e rating_count
-movies_df['average_rating'] = movies_df['average_rating'].fillna(0)
-movies_df['rating_count'] = movies_df['rating_count'].fillna(0)
+# Step 6: Salvataggio dei risultati
+movies_with_clusters.reset_index().to_csv('movies_with_clusters.csv', index=False)
+feature_matrix.to_csv('reduced_feature_matrix.csv', index=True)
 
-# Estrazione dell'anno di rilascio dal titolo del film (es. "Movie Title (1995)")
-movies_df['release_year'] = movies_df['title'].str.extract(r'\((\d{4})\)').astype(float)
-
-# Riempimento degli anni mancanti con 0 e conversione a intero
-movies_df['release_year'] = movies_df['release_year'].fillna(0).astype(int)
-
-print("movie con valori mergati: ", movies_df.head(10))
-
-# Applicazione di un peso alla variabile 'genres_split' (moltiplicandola per 'genre_weight')
-# Si cerca di dare maggiore peso ai generi nel modello
-genre_weight = 2
-genres_split = genres_split * genre_weight
-
-# Crea una lista di caratteristiche con 'average_rating', 'rating_count' e le colonne di 'genres_split'.
-features = ['average_rating', 'rating_count'] + list(genres_split.columns)
-
-# Estrazione del sottoinsieme delle caratteristiche selezionate da 'movies'
-X = movies_df[features]
-
-# Normalizzazione dei dati di 'X', con StandardScaler, per una maggiore comparabilità nel modello
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-# Esecuzione del clustering K-means con 'optimal_k' cluster sui dati standardizzati 'X_scaled'
-optimal_k = 5
-kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-kmeans.fit(X_scaled)
-
-# Assegnamento dei cluster alle righe di 'movies'
-movies_df['cluster'] = kmeans.labels_
-
-# Unione dei dati con 'links' per aggiungere anche il 'tmdbId'
-movies_df = movies_df.merge(links_df[['movieId', 'tmdbId']], on='movieId', how='left')
-
-# # Salvataggio del modello KMeans e dello scaler in due file separati utilizzando pickle per la serializzazione
-with open('kmeans_model.pkl', 'wb') as model_file:
-    pickle.dump(kmeans, model_file)
-
-with open('scaler.pkl', 'wb') as scaler_file:
-    pickle.dump(scaler, scaler_file)
-    
-# Salvataggio del DataFrame 'movies_df' in un file CSV
-movies_df.to_csv('processed_movies.csv', index=False)
-
-print("Il modello KMeans è stato salvato come 'kmeans_model.pkl'.")
-print("Lo scaler è stato salvato come 'scaler.pkl'.")
-print("Il DataFrame dei film è stato salvato come 'processed_movies.csv'.")
-
+print("Clustering completato. I risultati sono stati salvati.")
 
