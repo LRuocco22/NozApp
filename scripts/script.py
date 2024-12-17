@@ -1,14 +1,13 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-import pickle
 from sklearn.preprocessing import MultiLabelBinarizer
 
 # Percorsi dei file
 movies_path = '../movielens/movies.csv'
 links_path = '../movielens/links.csv'
-genome_scores_path = '../genome-scores.csv'
-genome_tags_path = '../genome-tags.csv'
+genome_scores_path = '../movielens/genome-scores.csv'
+genome_tags_path = '../movielens/genome-tags.csv'
 
 # Step 1: Caricamento dei file
 movies_df = pd.read_csv(movies_path)
@@ -36,7 +35,7 @@ feature_matrix = pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).
 feature_matrix = feature_matrix.loc[feature_matrix.index.intersection(movies_df['movieId'])]
 
 # Step 5: Clustering con KMeans
-num_clusters = 3
+num_clusters = 10
 kmeans = KMeans(n_clusters=num_clusters, random_state=42)
 clusters = kmeans.fit_predict(feature_matrix)
 
@@ -46,7 +45,7 @@ movies_with_clusters['cluster'] = pd.Series(clusters, index=feature_matrix.index
 
 # Step 6: Salvataggio dei risultati
 movies_with_clusters.reset_index().to_csv('movies_with_clusters.csv', index=False)
-feature_matrix.to_csv('reduced_feature_matrix.csv', index=True)
+feature_matrix.to_csv('feature_matrix.csv', index=True)
 
 print("Clustering completato. I risultati sono stati salvati.")
 
