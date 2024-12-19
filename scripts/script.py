@@ -35,7 +35,7 @@ feature_matrix = pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).
 feature_matrix = feature_matrix.loc[feature_matrix.index.intersection(movies_df['movieId'])]
 
 # Step 5: Clustering con KMeans
-num_clusters = 10
+num_clusters = 3
 kmeans = KMeans(n_clusters=num_clusters, random_state=42)
 clusters = kmeans.fit_predict(feature_matrix)
 
