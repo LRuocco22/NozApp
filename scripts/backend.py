@@ -48,5 +48,8 @@ def recommend(request: RecommendRequest):
     recommended_indices = np.argsort(distances)[:20]
     recommended_movies = movies_with_clusters.iloc[recommended_indices]
 
+    # Escludi i film passati nella richiesta
+    recommended_movies = recommended_movies[~recommended_movies['tmdbId'].isin(tmdb_ids)]
+
     # Restituisci i risultati
     return recommended_movies[['tmdbId', 'title']].to_dict(orient='records')
