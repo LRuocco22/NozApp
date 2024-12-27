@@ -15,6 +15,8 @@ links_df = pd.read_csv(links_path)
 genome_scores_df = pd.read_csv(genome_scores_path)
 genome_tags_df = pd.read_csv(genome_tags_path)
 
+# Step 1.1: Rimuove i films con mancanti TMDb IDs
+links_df = links_df[links_df['tmdbId'].notnull() & (links_df['tmdbId'] > 0)]
 
 # Step 2: Unione dei dataset
 genome_scores_with_tags = genome_scores_df.merge(genome_tags_df, on="tagId")
