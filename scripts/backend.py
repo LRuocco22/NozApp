@@ -45,7 +45,7 @@ def recommend(request: RecommendRequest):
     distances = cdist(mean_features, feature_matrix.values, metric='euclidean')[0]
 
     # Ordina i film in base alla distanza e seleziona i più vicini
-    recommended_indices = np.argsort(distances)[:10]
+    recommended_indices = np.argsort(distances)[:20]
     recommended_movies = movies_with_clusters.iloc[recommended_indices]
 
     # Restituisci i risultati
