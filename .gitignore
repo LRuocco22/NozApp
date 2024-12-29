@@ -1,3 +1,6 @@
 ﻿*.csv
 *.pkl
 scripts/__pycache__
+*.synctex.gz
+*.synctex
+*.gz

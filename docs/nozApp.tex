@@ -1,0 +1,97 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tocloft}
+\usepackage{graphicx}
+\usepackage{tabularx}    % Per creare tabelle con larghezza personalizzata
+\usepackage[table,xcdraw]{xcolor} % Per aggiungere colori nella tabella
+\usepackage{hyperref} %lo usiamo per poter inserire i link cliccabili nel documento
+
+
+
+
+
+% Margini e formattazione
+\usepackage[margin=2.5cm]{geometry}
+\renewcommand{\cftsecfont}{\bfseries}
+\renewcommand{\cftsecpagefont}{\bfseries}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+% Colori per il titolo e le sezioni
+\definecolor{titlecolor}{RGB}{30,144,255}
+\definecolor{subtitlecolor}{RGB}{220,20,60}
+
+% Header 
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=1.2cm]{logo.jpg}}
+\fancyhead[C]{\footnotesize Laurea Triennale in Informatica - Università di Salerno\\
+Corso di Fondamenti di Intelligenza Artificiale -- Professore  F. Palomba}
+\fancyfoot[C]{\thepage}
+
+% Formattazione dei titoli
+\titleformat{\section}
+  {\large\bfseries\color{titlecolor}}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{subtitlecolor}}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% Logo e titolo
+\begin{center}
+    \includegraphics[width=0.2\textwidth]{logo.jpg}\\[0.5cm]
+    \textbf{\large Laurea Triennale in Informatica - Università di Salerno}\\
+    \textbf{\large Corso di Fondamenti di Intelligenza Artificiale}\\
+    \textbf{\large Professore F. Palomba}\\[1.5cm]
+    \textcolor{titlecolor}{\Huge }
+\end{center}
+
+\vspace{-2cm}
+
+% Sommario Impostazioni
+\setcounter{tocdepth}{3}
+\renewcommand{\contentsname}{\textcolor{blue}{Sommario}}
+\tableofcontents
+
+\newpage
+
+% Lista di tutte le voci del progetto
+\section{Introduzione: sistema attuale e sistema proposto}
+\section{Descrizione dell’agente}
+\subsection{Obiettivi}
+\subsection{Specifica PEAS}
+\subsection{Analisi del problema}
+\section{Raccolta, analisi e preprocessing dei dati}
+\subsection{Scelta del dataset}
+\subsection{Analisi e scrematura del dataset}
+\subsubsection{Tabella Movies}
+\subsubsection{Tabella Links}
+\subsubsection{Tabella Genome-Scores}
+\subsubsection{Tabella Genome-Tags}
+\subsubsection{Tabella Ratings}
+\subsubsection{Tabella Tags}
+\subsection{Preprocessing dei Dati}
+\subsubsection{Caricamento dei dati}
+\subsubsection{Unione dei Dataset}
+\subsubsection{Preprocessing per il Clustering}
+\section{Algoritmo di clustering}
+\subsection{Scelta dell’algoritmo di clustering}
+\subsubsection{K-Means}
+\subsubsection{Scelta del numero di Cluster}
+\subsubsection{Implementazione dell'algoritmo KMeans}
+\section{Integrazione con il sistema}
+\subsection{Architettura e Funzionalità Principali}
+\subsection{Logica Implementata: }
+\subsubsection{Risposta e Error Handling}
+\subsection{Logica Interna e Dettagli Tecnici}
+\subsection{Implementazione dello script: }
+\section{Glossario}
+\end{document}
+
+
+
+
+
