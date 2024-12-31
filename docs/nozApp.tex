@@ -60,12 +60,77 @@ Corso di Fondamenti di Intelligenza Artificiale -- Professore  F. Palomba}
 
 % Lista di tutte le voci del progetto
 \section{Introduzione: sistema attuale e sistema proposto}
+Oggi, con il cambiamento dello stile di vita delle persone, che preferiscono sempre più restare a casa, e a seguito della pandemia, le piattaforme di streaming hanno ottenuto un successo crescente. Già ampiamente utilizzate, queste piattaforme permettono di guardare film e serie TV su qualsiasi dispositivo connesso a Internet. Con l’aumento della loro popolarità, hanno sentito l’esigenza di rendere l’esperienza dell’utente sempre più personalizzata, introducendo nuove funzionalità.\\
+
+Inizialmente, i problemi principali erano due: da un lato, l’utente accedeva alla piattaforma sapendo già cosa guardare, limitandosi semplicemente a visualizzare i contenuti scelti per poi uscire; dall’altro lato, numerosi utenti, incerti su cosa guardare, si trovavano disorientati dalla vasta offerta disponibile e, di conseguenza, spesso abbandonavano l’idea di selezionare un contenuto.\\
+
+A partire dal 2006, con l’introduzione dei primi algoritmi di raccomandazione su Netflix, è iniziata una trasformazione che ha rivoluzionato il modo in cui gli utenti fruiscono dei contenuti. Inizialmente, questi algoritmi si limitavano a proporre i contenuti più popolari, più visti e le ultime uscite. Successivamente, si sono evoluti, ponendo l’utente al centro dell’esperienza. Oggi, i contenuti vengono consigliati sulla base delle preferenze individuali, tenendo conto non solo dei contenuti già visti e dei generi preferiti, ma anche di attori, registi e altre caratteristiche, come le case di produzione.\\
+
+Utilizzando piattaforme di streaming come Netflix o Prime Video, si può apprezzare il progresso degli algoritmi di intelligenza artificiale, che rendono l’esperienza dell’utente ancora più immersiva e dinamica.\\
+
+Il progetto proposto mira a realizzare una web app ottimizzata per smart TV, che consenta agli utenti di scoprire nuovi contenuti da guardare. L’app offrirà la possibilità di accedere a informazioni dettagliate sui film, inclusi trailer e indicazioni sulle piattaforme dove sono disponibili. In particolare, il sistema sfrutterà i dati derivati dalla lista di preferiti dell’utente per consigliare contenuti in linea con i suoi gusti, considerando elementi come genere, cast, produzione e anno di uscita. Il tutto sarà supportato da tecniche di intelligenza artificiale, simili a quelle già adottate dalle principali piattaforme di streaming.
+
 \section{Descrizione dell’agente}
+
 \subsection{Obiettivi}
-\subsection{Specifica PEAS}
+Lo scopo del progetto è quello di realizzare un agente intelligente che sia in grado di:
+	\begin{itemize}
+		 \item Generare un insieme di film basandosi sulla lista dei preferiti dell'utente;
+		 \item Consigliare una lista di contenuti correlati nella schermata di dettaglio del singolo film;
+  		 \item Nel consigliare i film, non deve tenere conto di una singola caratteristica, ma di tutte le informazioni che possono essere utilizzate per personalizzare al meglio la lista di film.
+	\end{itemize}
+
+\newpage %Vado alla nuova pagina per far entrare tutta la tabella in una sola pagina
+
+\subsection{Specifica PEAS} 
+Diamo ora la specifica PEAS dell'agente:
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.5} % Spazio tra le righe
+    \setlength{\tabcolsep}{8pt} % Spazio tra colonne
+    \begin{tabularx}{\textwidth}{|>{\columncolor[HTML]{CFE2F3}}l|X|}
+        \hline
+        \rowcolor[HTML]{CFE2F3} 
+        \textbf{PEAS}              & \textbf{Descrizione}                                                                                                                                                                                                                                                                                         \\ \hline
+        \textbf{Performance}       & La misura di performance dell'agente è la sua capacità di avvicinarsi quanto più possibile a una situazione ideale nella quale vengano mostrati agli utenti esattamente i film che loro desiderano guardare e ai quali sono interessati.                                                                                           				\\ \hline
+        \textbf{Environment}       & L’ambiente in cui opera l’agente è lo spazio dell'utente dell'app, con le sue preferenze, unito a quello dei possibili film e le loro caratteristiche. L’ambiente è:
+                            \begin{itemize}
+                              \item \textbf{Dinamico}, in quanto nel corso delle elaborazioni dell’agente, l'utente aggiunge un film alla sua lista di preferiti, cambiando in tal modo le sue preferenze;
+                              \item \textbf{Sequenziale}, in quanto le preferenze passate dell'utente influenzano le decisioni future dell’agente;
+			\item 	L'ambiente è \textbf{Discreto} perchè gli stati (film) e le azioni (suggerimenti) sono limitati e finiti, basati su attributi come genere, cast e tag, che hanno un numero definito di valori;
+                              \item \textbf{Completamente osservabile}, in quanto si ha accesso a tutte le informazioni relative al catalogo di contenuti e alle preferenze dell'utente in ogni momento;
+                              \item \textbf{Non deterministico}, in quanto lo stato dell’ambiente cambia indipendentemente dalle azioni dell’agente;
+                              \item \textbf{Non noto}, in quanto l’agente non può conoscere a priori il risultato esatto delle sue azioni, in termini di efficienza;
+                              \item \textbf{Stocastico e unico}, in quanto l’unico agente che opera in questo ambiente è quello in oggetto.
+                            \end{itemize}            
+                                                \\ \hline
+        \textbf{Actuators}         & Gli attuatori dell’agente consistono nella lista dei film consigliati sulla base delle preferenze dell'utente e il relativo carrello che li mostra.                                                                                                                                                                                  					\\ \hline
+        \textbf{Sensors}           & I sensori dell’agente consistono nel bottone per aggiungere un film ai preferiti e la pagina dei dettagli del singolo film.                                                                                                                                                                                                      					\\ \hline
+    \end{tabularx}
+    \caption{Specifica PEAS dell'agente}
+\end{table}
+
+   \newpage
 \subsection{Analisi del problema}
+	L'intenzione di sviluppare questo agente nasce dallo studio dell'API di TMDb, che offre algoritmi di raccomandazione. Tuttavia, sono state individuate due principali limitazioni:
+
+		\begin{itemize}
+			 \item L'API richiede la registrazione dell'utente, mentre si è scelto di rendere il sistema accessibile senza obbligo di login, consentendo all'utente di usufruire delle funzionalità anche senza registrarsi. 
+			 \item TMDb è soggetto al "cold start problem", ovvero l'algoritmo ha difficoltà a fare raccomandazioni accurate quando l'utente non ha ancora espresso preferenze. Per ovviare a questo, è stata implementata una fase di "User Onboarding", durante la quale all'utente viene chiesto di indicare le sue preferenze all'avvio dell'applicazione.
+		 \end{itemize}
+Si è scelto di interpretare il problema come un problema di \textbf{Clustering}. L'idea è stata di analizzare la lista dei film preferiti dall'utente, estrarre le informazioni rilevanti da questi, e generare una lista di film che rispecchiassero i suoi gusti, suggerendo contenuti che potessero piacergli.
 \section{Raccolta, analisi e preprocessing dei dati}
 \subsection{Scelta del dataset}
+		Andando a parlare del dataset necessario per la creazione del modello di machine learning, si potevano considerare due possibili approcci:
+
+		\begin{enumerate}
+   			 \item \textbf{Creare} un dataset da zero, raccogliendo informazioni su tutti i film, anche quelli più vecchi, e concentrandosi sugli aspetti salienti come generi, attori, anno di uscita, tag, ecc.;
+    			 \item \textbf{Cercare} un dataset già formato e adattarlo alle specifiche esigenze del progetto.
+		\end{enumerate}
+
+		La prima soluzione risultava impraticabile, dato l'enorme numero di film presenti nella storia e la varietà di caratteristiche che sarebbe stato necessario raccogliere e inserire. Tale approccio avrebbe portato alla creazione di un dataset poco popolato e privo di molte informazioni importanti.
+
+		Si è quindi deciso di procedere cercando in rete un dataset già esistente. Dopo aver considerato diverse opzioni, si è scelto il dataset MovieLens, che si è rivelato il più adatto alle necessità del progetto.
 \subsection{Analisi e scrematura del dataset}
 \subsubsection{Tabella Movies}
 \subsubsection{Tabella Links}
