@@ -20,6 +20,7 @@ app.add_middleware(
 # Carica i file generati
 movies_with_clusters = pd.read_csv('movies_with_clusters.csv')
 feature_matrix = pd.read_csv('feature_matrix.csv', index_col=0)
+kmeans_centroids = pd.read_csv('kmeans_cluster_centers.csv', header=None).values  # Carica i centroidi
 
 # Modello per l'input
 class RecommendRequest(BaseModel):
@@ -41,15 +42,22 @@ def recommend(request: RecommendRequest):
     # Calcola la media dei vettori di caratteristiche
     mean_features = input_features.mean(axis=0).values.reshape(1, -1)
 
-    # Calcola la distanza tra il vettore medio e tutti i film in modo vettoriale
-    distances = cdist(mean_features, feature_matrix.values, metric='euclidean')[0]
+    # Identifica il cluster più vicino al vettore medio
+    closest_cluster = np.argmin(cdist(mean_features, kmeans_centroids, metric='euclidean'))
+
+    # Filtra i film appartenenti al cluster identificato
+    cluster_movies = movies_with_clusters[movies_with_clusters['cluster'] == closest_cluster]
+    cluster_feature_matrix = feature_matrix.loc[cluster_movies['movieId']]
+
+    # Calcola la distanza tra il vettore medio e i film filtrati
+    distances = cdist(mean_features, cluster_feature_matrix.values, metric='euclidean')[0]
 
     # Ordina i film in base alla distanza e seleziona i più vicini
     recommended_indices = np.argsort(distances)[:20]
-    recommended_movies = movies_with_clusters.iloc[recommended_indices]
+    recommended_movies = cluster_movies.iloc[recommended_indices]
 
     # Escludi i film passati nella richiesta
     recommended_movies = recommended_movies[~recommended_movies['tmdbId'].isin(tmdb_ids)]
 
     # Restituisci i risultati
-    return recommended_movies[['tmdbId', 'title']].to_dict(orient='records')
+    return recommended_movies[['tmdbId', 'title', 'cluster', 'genres']].to_dict(orient='records')

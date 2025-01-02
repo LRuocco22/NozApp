@@ -37,9 +37,13 @@ feature_matrix = pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).
 feature_matrix = feature_matrix.loc[feature_matrix.index.intersection(movies_df['movieId'])]
 
 # Step 5: Clustering con KMeans
-num_clusters = 3
+num_clusters = 4
 kmeans = KMeans(n_clusters=num_clusters, random_state=42)
 clusters = kmeans.fit_predict(feature_matrix)
+
+# Salva i centroidi dei cluster
+centroids = kmeans.cluster_centers_
+pd.DataFrame(centroids).to_csv('kmeans_cluster_centers.csv', index=False, header=False)
 
 # Associare i cluster ai film
 movies_with_clusters = movies_df.set_index('movieId').join(links_df.set_index('movieId'), how='inner')
@@ -50,4 +54,3 @@ movies_with_clusters.reset_index().to_csv('movies_with_clusters.csv', index=Fals
 feature_matrix.to_csv('feature_matrix.csv', index=True)
 
 print("Clustering completato. I risultati sono stati salvati.")
-
