@@ -11,17 +11,23 @@ genome_tags_path = '../movielens/genome-tags.csv'
 
 # Step 1: Caricamento dei file
 movies_df = pd.read_csv(movies_path)
-links_df = pd.read_csv(links_path)
+links_df = pd.read_csv(links_path).drop(columns=['imdbId'])
 genome_scores_df = pd.read_csv(genome_scores_path)
 genome_tags_df = pd.read_csv(genome_tags_path)
 
 # Step 1.1: Rimuove i films con mancanti TMDb IDs
 links_df = links_df[links_df['tmdbId'].notnull() & (links_df['tmdbId'] > 0)]
+# Step 1.2 Rimuovere i films con generi mancanti
+movies_df = movies_df[movies_df['genres'] != '(no genres listed)']
 
 # Step 2: Unione dei dataset
 genome_scores_with_tags = genome_scores_df.merge(genome_tags_df, on="tagId")
 movies_with_tags = movies_df.merge(genome_scores_with_tags, on="movieId")
 final_dataset = movies_with_tags.merge(links_df[['movieId', 'tmdbId']], on="movieId")
+
+# Filtra i film senza tag
+tagged_movie_ids = genome_scores_with_tags['movieId'].unique()
+movies_df = movies_df[movies_df['movieId'].isin(tagged_movie_ids)]
 
 # Step 3: Prepara i dati per clustering
 movies_df['genres_list'] = movies_df['genres'].apply(lambda x: x.split('|'))
