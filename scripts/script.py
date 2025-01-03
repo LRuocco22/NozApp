@@ -11,14 +11,16 @@ genome_tags_path = '../movielens/genome-tags.csv'
 
 # Step 1: Caricamento dei file
 movies_df = pd.read_csv(movies_path)
-links_df = pd.read_csv(links_path).drop(columns=['imdbId'])
+links_df = pd.read_csv(links_path)
 genome_scores_df = pd.read_csv(genome_scores_path)
 genome_tags_df = pd.read_csv(genome_tags_path)
 
 # Step 1.1: Rimuove i films con mancanti TMDb IDs
 links_df = links_df[links_df['tmdbId'].notnull() & (links_df['tmdbId'] > 0)]
-# Step 1.2 Rimuovere i films con generi mancanti
+# Step 1.2 Rimuove i films con generi mancanti
 movies_df = movies_df[movies_df['genres'] != '(no genres listed)']
+# Step 1.3 Rimuove la colonna 'imdbId'
+links_df = links_df.drop(columns=['imdbId'])
 
 # Step 2: Unione dei dataset
 genome_scores_with_tags = genome_scores_df.merge(genome_tags_df, on="tagId")
