@@ -21,7 +21,7 @@ def effettua_richiesta_post(url, dati):
 url_endpoint = "http://127.0.0.1:8000/recommend"
 
 dati_da_inviare = {
-    "tmdb_ids": [892]
+    "tmdb_ids": [277834, 862, 354912, 672] # TITOLI DEI FILM: MOANA, TOY STORY, COCO, HARRY POTTER E LA CAMERA DEI SEGRETI
 }
 
 effettua_richiesta_post(url_endpoint, dati_da_inviare)
