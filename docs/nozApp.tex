@@ -298,51 +298,6 @@ mlb = MultiLabelBinarizer()
 genres_encoded = pd.DataFrame(mlb.fit_transform(movies_df['genres_list']),
                  columns=mlb.classes_, index=movies_df['movieId'])
 \end{verbatim}
-
-    			 \item \textbf{Calcolo dei punteggi medi di rilevanza per tag} \\
-						Si utilizza il dataset unificato generato nella fase \hyperref[sec:unione-dataset]{\textbf{Unione dei Dataset}}  per aggregare i punteggi di rilevanza delle tag per ogni film. Questo consente di ottenere una rappresentazione compatta dei punteggi medi per ogni tag. Si ottiene, quindi, un DataFrame (tag-relevance) in cui: le righe rappresentano i film (movieId), le colonne i tag, e i valori indicano il punteggio medio di rilevanza del tag per quel film.
-\begin{verbatim}
-tag_relevance = final_dataset.groupby(['movieId', 'tag'])['relevance']
-		              .mean().unstack(fill_value=0)
-\end{verbatim}
-					%\begin{center}
-						%\includegraphics[]{./ScreenScript/2.png}
-					%\end{center}
-\newpage
-			 \item \textbf{Creazione della matrice delle feature}\\
-				I dati codificati dei generi e i punteggi delle tag vengono uniti per creare una matrice completa, in cui ogni film è rappresentato da un vettore di caratteristiche numeriche. I passaggi effettuati sono: 
-							\begin{itemize}
-								\item \textbf{Concatenazione: } le due componenti (genres-encoded e tag-relevance) vengono unite lungo le colonne.
-								\item \textbf{Gestione dei valori mancanti: } le posizioni vuote vengono riempite con il valore "0" utilizzando "fillna(0)".
-								\item \textbf{Filtraggio degli indici: } Si assicura che i film presenti nella matrice abbiano corripondenza nei dati originali (movies-df).
-							\end{itemize}
-
-						%\begin{center}
-						% \includegraphics[]{./ScreenScript/3.png}
-						%\end{center}
-\begin{verbatim}
-feature_matrix = 
-			pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).fillna(0)
-feature_matrix = 
-			feature_matrix.loc[feature_matrix.index.intersection(movies_df['movieId'])]
-\end{verbatim}
-					Il risultato finale di questa fase è la matrice delle feature (feature-matrix), che rappresenta la base per il clustering. Questa matrice fornisce una descrizione numerica completa e scalabile di ogni film, combinando, generi codificati come variabili binarie e rilevanza media delle tag. Questa rappresentazione garantisce che ogni film sia rappresentato in uno spazio vettoriale uniforme, rendendolo idoneo per l'algoritmo \textbf{KMeans} nella fase successiva.
-
-		\end{enumerate}
-
-        \subsubsection{Preprocessing per il Clustering}
-		Questa fase è cruciale per preparare i dati grezzi in una forma che consenta di applicare efficacemente tecniche di clustering. In questa parte vengono integrate informazioni dui generi e sui punteggi di rilevanza dei tag, trasformandole in una matrice delle feature. Si vuole quindi creare una rappresentazione vettoriale coerente dei film, che combini generi e rilevanza dei tag, pronta per l'algoritmo di clustering. Vengono eseguiti tre passaggi chiave: 
-
-			\begin{enumerate}
-   			 \item \textbf{Codifica dei generi cinematografici} \\
-				I generi dei film, originariamente rappresentati come stringhe separate da pipe,  vengono convertiti in una lista e successivamente codificati in variabili binarie utilizzando "MultiLabelBinarizer". Il risultato è un DataFrame (genres-encoded) che associa a ciascun "movieId" un vettore binario rappresentante i generi.
-						%\includegraphics[]{./ScreenScript/1.png}
-\begin{verbatim}
-movies_df['genres_list'] = movies_df['genres'].apply(lambda x: x.split('|'))
-mlb = MultiLabelBinarizer()
-genres_encoded = pd.DataFrame(mlb.fit_transform(movies_df['genres_list']),
-                 columns=mlb.classes_, index=movies_df['movieId'])
-\end{verbatim}
 \newpage
     			 \item \textbf{Calcolo dei punteggi medi di rilevanza per tag} \\
 						Si utilizza il dataset unificato generato nella fase \hyperref[sec:unione-dataset]{\textbf{Unione dei Dataset}}  per aggregare i punteggi di rilevanza delle tag per ogni film. Questo consente di ottenere una rappresentazione compatta dei punteggi medi per ogni tag. Si ottiene, quindi, un DataFrame (tag-relevance) in cui: le righe rappresentano i film (movieId), le colonne i tag, e i valori indicano il punteggio medio di rilevanza del tag per quel film.
@@ -386,7 +341,7 @@ L'approccio basato sul clustering è stato scelto per affrontare il problema del
 La scelta di K-Means è stata rafforzata dall'analisi preliminare della distribuzione dei dati, rappresentata attraverso un grafico generato con la PCA. Questo grafico, che proietta i dati in uno spazio bidimensionale, evidenzia una distribuzione densa e compatta, come mostrato di seguito:
 
 \begin{center}
-\includegraphics[]{D:/ProgettoFIA/DocumentazioneProgetto/DocumentazioneLaTex/ScreenScript/PCA.png}
+\includegraphics[]{./grafici/PCA.png}
 
 \textit{Figura 1: Distribuzione dei dati rappresentata con PCA.}
 \end{center}
@@ -399,7 +354,7 @@ La selezione del numero di cluster \textbf{K = 4} è stata effettuata attraverso
 		\begin{itemize}
 			\item \textbf{Elbow Point Method} : 
 				\begin{center}
-					\includegraphics[]{D:/ProgettoFIA/DocumentazioneProgetto/DocumentazioneLaTex/ScreenScript/elbow_point.png}
+					\includegraphics[]{./grafici/elbow_point.png}
 
 \textit{Figura 2: Metodo Elbow per identificare il numero ottimale di cluster.}
 				\end{center}
@@ -411,7 +366,7 @@ Dal grafico della somma degli errori al quadrato (SSE), si osserva un gomito pi�
 			\item \textbf{Valutazione tramite il Silhouette Score: } Il Silhouette Score misura la qualità del clustering considerando sia la coesione interna (quanto i punti sono vicini al centro del loro cluster) sia la separazione tra cluster.
 
 	\begin{center}
-		\includegraphics[]{D:/ProgettoFIA/DocumentazioneProgetto/DocumentazioneLaTex/ScreenScript/silhouette_score.png}
+		\includegraphics[]{./grafici/silhouette_score.png}
 
 \textit{Figura 3: Analisi del punteggio Silhouette per valutare la coesione e la separazione dei cluster.}
 	\end{center}
@@ -456,11 +411,67 @@ Una volta completato il clustering, i risultati vengono associati ai film utiliz
 Il primo, \textbf{kmeans-cluster-centers.csv}, è un file che contiene le coordinate dei centroidi calcolati dall'algoritmo di clustering K-Means.\\Il secondo, \textbf{movies-with-clusters.csv},  contiene i risultati del clustering con informazioni sui film.\\Il terzo, \textbf{feature-matrix.csv} è una matrice che rappresenta le caratteristiche numeriche dei film, utilizzata per il clustering, dove ogni riga rappresenta un film mentre ogni colonna una caratteristica.\\
 Il processo si conclude con un messaggio di conferma che informa che il clustering è stato completato e i risultati sono stati salvati. Questo approccio assicura un'integrazione fluida del modello K-Means nel sistema, consentendo di segmentare il dataset MovieLens in modo efficace e scalabile.
 \section{Integrazione con il sistema}
+Il backend del modulo di raccomandazione è stato sviluppato utilizzando \textbf{FastAPI}, un framework moderno e ad alte prestazioni per la creazione di API RESTful. Questo modulo consente di fornire raccomandazioni di film basate su una lista di preferiti selezionata dall'utente, sfruttando algoritmi di clustering KMeans e il calcolo delle distanze euclidee.
+
 \subsection{Architettura e Funzionalità Principali}
-\subsection{Logica Implementata: }
+\begin{enumerate}
+    \item \textbf{Framework e Tecnologie Utilizzate}
+        \begin{itemize}
+            \item \textbf{FastAPI: }Utilizzato per costruire l'API REST, garantendo alta velocità e semplicità nella gestione delle richieste HTTP.
+            \item \textbf{FastAPI-CORS: }Configurato per abilitare le richieste Cross-Origin Resource Sharing (CORS), consentendo l'accesso all'API da frontend ospitati su domini differenti.
+            \item \textbf{Pandas e NumPy: }Per la manipolazione e il calcolo dei dati, inclusa la gestione delle matrici di caratteristiche.
+            \item \textbf{SciPy: }Per il calcolo delle distanze euclidee utilizzando la funzione \textbf{cdist}.
+        \end{itemize}
+    \item \textbf{Dataset Utilizzati}
+        \begin{itemize}
+            \item \textbf{movies-with-clusters.csv: }Contiene i dati relativi ai film, inclusi gli ID TMDb, i titoli e i cluster generati dall'algoritmo KMeans.
+            \item \textbf{feature-matrix.csv: }Una matrice numerica che rappresenta le caratteristiche dei film utilizzate per il calcolo della similarità.
+            \item \textbf{kmeans-cluster-centers.csv: }Contiene le coordinate dei centroidi calcolati dall'algoritmo KMeans, utilizzati per identificare i cluster più vicini.
+        \end{itemize}
+\end{enumerate}
+
+\subsection{Logica Implementata}
+\begin{enumerate}
+    \item Gli ID TMDb inviati nella richiesta vengono mappati sugli \textbf{movieId} del dataset `movies-with-clusters.csv`.
+    \item Vengono estratte le caratteristiche dei film corrispondenti dalla matrice delle caratteristiche (\textbf{feature-matrix.csv}).
+    \item Si calcola il vettore medio delle caratteristiche per rappresentare il "gusto" medio dell'utente.
+    \item Si identifica il cluster più vicino al vettore medio calcolando le distanze euclidee dai centroidi dei cluster (\textbf{kmeans-cluster-centers.csv}).
+    \item Si selezionano i film appartenenti al cluster più vicino.
+    \item Si calcolano le distanze euclidee tra il vettore medio dell'utente e i film selezionati, ordinandoli in base alla vicinanza per generare le raccomandazioni.
+    \item I film già presenti nella lista dei preferiti vengono esclusi dai risultati finali.
+\end{enumerate}
+
 \subsubsection{Risposta e Error Handling}
+\begin{itemize}
+    \item Il sistema restituisce un oggetto \textbf{JSON} contenente la lista dei film raccomandati. Ogni oggetto rappresenta un singolo film raccomandato includendo l'\textbf{ID TMDb}, il \textbf{titolo}, il \textbf{cluster} e i \textbf{generi}.
+    \item Se nessuno dei film inviati nella richiesta è presente nel dataset, viene restituita una stringa che recita: \textbf{"Non ci sono film da Raccomandare all'utente"}.
+\end{itemize}
+
 \subsection{Logica Interna e Dettagli Tecnici}
-\subsection{Implementazione dello script: }
+\begin{itemize}
+    \item \textbf{Clustering e Matrice delle Caratteristiche: }
+    \begin{itemize}
+        \item La matrice delle caratteristiche (\textbf{feature-matrix.csv}) è stata generata a partire dai metadati dei film, includendo attributi come generi e tag di rilevanza.
+        \item L'algoritmo KMeans è stato utilizzato per raggruppare i film in cluster, facilitando la raccomandazione di contenuti simili.
+        \item I centroidi dei cluster (\textbf{kmeans-cluster-centers.csv}) vengono utilizzati per determinare il cluster più vicino al profilo dell'utente.
+    \end{itemize}
+    \item \textbf{Calcolo della Similarità: }
+    \begin{itemize}
+        \item Il calcolo della similarità si basa sulle distanze euclidee tra il vettore medio delle caratteristiche dell'utente e i film nella matrice delle caratteristiche.
+    \end{itemize}
+    \item \textbf{Ottimizzazione: }
+    \begin{itemize}
+        \item L'approccio vettoriale con \textbf{cdist} consente un calcolo efficiente delle distanze, anche su dataset di grandi dimensioni.
+    \end{itemize}
+\end{itemize}
+\newpage
+\subsection{Implementazione dello script}
+Di seguito è riportato uno screenshot del codice dello script backend descritto nelle sezioni precedenti.
+\begin{center}
+    \includegraphics[]{./grafici/backend.png}
+\end{center}
+Il modulo backend è stato progettato per essere modulare e scalabile. Grazie all'utilizzo di dataset pre-elaborati e algoritmi efficienti, il sistema garantisce prestazioni elevate anche su dataset di grandi dimensioni. Il servizio è facilmente integrabile con applicazioni frontend grazie alla semplicità dell'\textbf{API RESTful}.
+
 \section{Informazioni sul progetto}
 	\subsection{Membri del Progetto}
 	Il seguente progetto è stato realizzato da:  
