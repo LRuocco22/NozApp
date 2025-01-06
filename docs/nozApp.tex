@@ -331,12 +331,131 @@ feature_matrix =
 
 		\end{enumerate}
 
-\subsubsection{Preprocessing per il Clustering}
+        \subsubsection{Preprocessing per il Clustering}
+		Questa fase è cruciale per preparare i dati grezzi in una forma che consenta di applicare efficacemente tecniche di clustering. In questa parte vengono integrate informazioni dui generi e sui punteggi di rilevanza dei tag, trasformandole in una matrice delle feature. Si vuole quindi creare una rappresentazione vettoriale coerente dei film, che combini generi e rilevanza dei tag, pronta per l'algoritmo di clustering. Vengono eseguiti tre passaggi chiave: 
+
+			\begin{enumerate}
+   			 \item \textbf{Codifica dei generi cinematografici} \\
+				I generi dei film, originariamente rappresentati come stringhe separate da pipe,  vengono convertiti in una lista e successivamente codificati in variabili binarie utilizzando "MultiLabelBinarizer". Il risultato è un DataFrame (genres-encoded) che associa a ciascun "movieId" un vettore binario rappresentante i generi.
+						%\includegraphics[]{./ScreenScript/1.png}
+\begin{verbatim}
+movies_df['genres_list'] = movies_df['genres'].apply(lambda x: x.split('|'))
+mlb = MultiLabelBinarizer()
+genres_encoded = pd.DataFrame(mlb.fit_transform(movies_df['genres_list']),
+                 columns=mlb.classes_, index=movies_df['movieId'])
+\end{verbatim}
+\newpage
+    			 \item \textbf{Calcolo dei punteggi medi di rilevanza per tag} \\
+						Si utilizza il dataset unificato generato nella fase \hyperref[sec:unione-dataset]{\textbf{Unione dei Dataset}}  per aggregare i punteggi di rilevanza delle tag per ogni film. Questo consente di ottenere una rappresentazione compatta dei punteggi medi per ogni tag. Si ottiene, quindi, un DataFrame (tag-relevance) in cui: le righe rappresentano i film (movieId), le colonne i tag, e i valori indicano il punteggio medio di rilevanza del tag per quel film.
+\begin{verbatim}
+tag_relevance = final_dataset.groupby(['movieId', 'tag'])['relevance']
+		              .mean().unstack(fill_value=0)
+\end{verbatim}
+			 \item \textbf{Creazione della matrice delle feature}\\
+				I dati codificati dei generi e i punteggi delle tag vengono uniti per creare una matrice completa, in cui ogni film è rappresentato da un vettore di caratteristiche numeriche. I passaggi effettuati sono: 
+							\begin{itemize}
+								\item \textbf{Concatenazione: } le due componenti (genres-encoded e tag-relevance) vengono unite lungo le colonne.
+								\item \textbf{Gestione dei valori mancanti: } le posizioni vuote vengono riempite con il valore "0" utilizzando "fillna(0)".
+								\item \textbf{Filtraggio degli indici: } Si assicura che i film presenti nella matrice abbiano corripondenza nei dati originali (movies-df).
+							\end{itemize}
+
+						%\begin{center}
+						% \includegraphics[]{./ScreenScript/3.png}
+						%\end{center}
+\begin{verbatim}
+feature_matrix = 
+			pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).fillna(0)
+feature_matrix = 
+			feature_matrix.loc[feature_matrix.index.intersection(movies_df['movieId'])]
+\end{verbatim}
+					Il risultato finale di questa fase è la matrice delle feature (feature-matrix), che rappresenta la base per il clustering. Questa matrice fornisce una descrizione numerica completa e scalabile di ogni film, combinando, generi codificati come variabili binarie e rilevanza media delle tag. Questa rappresentazione garantisce che ogni film sia rappresentato in uno spazio vettoriale uniforme, rendendolo idoneo per l'algoritmo \textbf{KMeans} nella fase successiva.
+
+		\end{enumerate}
+\newpage
 \section{Algoritmo di clustering}
-\subsection{Scelta dell’algoritmo di clustering}
-\subsubsection{K-Means}
-\subsubsection{Scelta del numero di Cluster}
+    \subsection{Scelta dell’algoritmo di clustering}
+L'approccio basato sul clustering è stato scelto per affrontare il problema della raccomandazione di film in quanto consente di raggruppare i film in base a caratteristiche condivise, come generi e tag, senza la necessità di conoscere a priori le preferenze specifiche di un utente. Questa segmentazione permette di identificare gruppi omogenei di film, migliorando l'efficienza del sistema di raccomandazione: una volta identificato il cluster di appartenenza di un film preferito dall’utente, si possono suggerire altri film dello stesso gruppo, riducendo la complessità computazionale rispetto a confronti diretti con l’intero dataset.
+        \subsubsection{K-Means}
+	L'algoritmo K-Means è stato selezionato come metodo di clustering per le seguenti ragioni:
+	\begin{enumerate}
+		\item \textbf{Efficienza su grandi dataset: }K-Means è un algoritmo iterativo e scalabile che lavora in tempo lineare rispetto al numero di punti dati, risultando ideale per dataset di grandi dimensioni come MovieLens.
+		\item \textbf{Capacità di gestire feature multidimensionali: }Nel preprocessing, i dati categoriali (generi) e continui (punteggi di rilevanza dei tag) vengono combinati in una matrice di feature numeriche. K-Means è particolarmente adatto per individuare cluster in uno spazio multidimensionale come questo.
+		\item \textbf{Interpretabilità dei cluster: }I risultati di K-Means sono facilmente interpretabili, poiché ogni film viene assegnato a un cluster specifico basato sulla prossimità nello spazio delle feature. Questo facilita l’analisi e l’utilizzo pratico per generare raccomandazioni.
+		\item \textbf{Flessibilità nella scelta del numero di cluster: }K-Means consente di ottimizzare il valore di \textbf{K} in base alle caratteristiche del dataset
+\newpage
+		\item \textbf{Distribuzione dei Dati: }
+La scelta di K-Means è stata rafforzata dall'analisi preliminare della distribuzione dei dati, rappresentata attraverso un grafico generato con la PCA. Questo grafico, che proietta i dati in uno spazio bidimensionale, evidenzia una distribuzione densa e compatta, come mostrato di seguito:
+
+\begin{center}
+\includegraphics[]{D:/ProgettoFIA/DocumentazioneProgetto/DocumentazioneLaTex/ScreenScript/PCA.png}
+
+\textit{Figura 1: Distribuzione dei dati rappresentata con PCA.}
+\end{center}
+
+La compattezza della distribuzione suggerisce che i dati sono ben raggruppati e privi di dispersioni significative, un aspetto cruciale per l'efficacia di K-Means. Questa struttura consente all'algoritmo di identificare i cluster con maggiore precisione, riducendo l'impatto di eventuali outlier e garantendo una convergenza stabile dei centroidi. Inoltre, l'assenza di separazioni complesse o sovrapposizioni significative tra i dati rende la distanza euclidea, su cui si basa K-Means, una metrica adatta per il clustering in questo contesto.
+	\end{enumerate}
+\newpage
+	\subsubsection{Scelta del numero di Cluster}
+La selezione del numero di cluster \textbf{K = 4} è stata effettuata attraverso un'analisi rigorosa basata su metriche quantitative e considerazioni pratiche, per garantire un compromesso ottimale tra la coerenza interna dei cluster, la separazione tra gruppi distinti e l'utilità del modello per il progetto.
+		\begin{itemize}
+			\item \textbf{Elbow Point Method} : 
+				\begin{center}
+					\includegraphics[]{D:/ProgettoFIA/DocumentazioneProgetto/DocumentazioneLaTex/ScreenScript/elbow_point.png}
+
+\textit{Figura 2: Metodo Elbow per identificare il numero ottimale di cluster.}
+				\end{center}
+
+
+Dal grafico della somma degli errori al quadrato (SSE), si osserva un gomito più evidente per \textbf{K = 2}, che indica una significativa riduzione dell'errore intra-cluster rispetto a un solo cluster. Tuttavia, la riduzione continua per valori più alti di \textbf{K}, con un rallentamento evidente a partire da \textbf{K = 4}. Questa evidenza suggerisce che \textbf{K = 4} rappresenta un compromesso tra semplicità e capacità del modello di catturare la struttura dei dati.
+
+\newpage
+			\item \textbf{Valutazione tramite il Silhouette Score: } Il Silhouette Score misura la qualità del clustering considerando sia la coesione interna (quanto i punti sono vicini al centro del loro cluster) sia la separazione tra cluster.
+
+	\begin{center}
+		\includegraphics[]{D:/ProgettoFIA/DocumentazioneProgetto/DocumentazioneLaTex/ScreenScript/silhouette_score.png}
+
+\textit{Figura 3: Analisi del punteggio Silhouette per valutare la coesione e la separazione dei cluster.}
+	\end{center}
+
+
+Il valore massimo del Silhouette Score si osserva per \textbf{K = 2}, il che indica che i cluster sono ben separati e coesi a questo livello. Tuttavia, scegliere \textbf{K = 2} produrrebbe una segmentazione eccessivamente generica, con solo due grandi gruppi, che non rifletterebbero adeguatamente la complessità e la varietà dei dati. Per \textbf{K = 4}, il punteggio rimane accettabile, garantendo comunque una buona separazione tra i cluster, ma consentendo una segmentazione più dettagliata e significativa.
+		\end{itemize}
+
+
+La scelta di \textbf{K = 4} rappresenta un equilibrio ideale tra la semplicità suggerita dai grafici (\textbf{K = 2}) e la necessità di una segmentazione più significativa per il progetto. Questo valore consente di catturare la diversità delle caratteristiche dei dati senza introdurre complessità inutili, offrendo una soluzione più dettagliata e utile per il sistema di raccomandazione.
+\newpage
 \subsubsection{Implementazione dell'algoritmo KMeans}
+Lo script seguente implementa l'algoritmo K-Means per segmentare i film del dataset MovieLens in base ai loro generi e tag.
+L'obiettivo è identificare gruppi di film con caratteristiche simili per supportare un sistema di raccomandazione efficiente e scalabile. Di seguito viene descritto il processo in dettaglio.
+\begin{center}
+\begin{verbatim}
+# Step 5: Clustering con KMeans
+num_clusters = 4
+kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+clusters = kmeans.fit_predict(feature_matrix)
+
+# Salva i centroidi dei cluster
+centroids = kmeans.cluster_centers_
+pd.DataFrame(centroids).to_csv('kmeans_cluster_centers.csv',index=False,header=False)
+
+# Associare i cluster ai film
+movies_with_clusters = movies_df.set_index('movieId')
+				.join(links_df.set_index('movieId'), how='inner')
+movies_with_clusters['cluster'] = pd.Series(clusters, index=feature_matrix.index)
+
+# Step 6: Salvataggio dei risultati
+movies_with_clusters.reset_index().to_csv('movies_with_clusters.csv', index=False)
+feature_matrix.to_csv('feature_matrix.csv', index=True)
+
+print("Clustering completato. I risultati sono stati salvati.")
+\end{verbatim}
+\end{center}
+L'implementazione di K-Means nel sistema di raccomandazione inizia con la definizione del numero di cluster (\textbf{K = 4}). \\Il modello viene poi inizializzato specificando \textbf{n-clusters = 4 }per definire il numero di gruppi e \textbf{random-state = 42 }per garantire che i risultati siano riproducibili.\\
+Successivamente, il modello viene addestrato sulla matrice delle feature che rappresenta ogni film in uno spazio multidimensionale, dove le dimensioni corrispondono ai generi e ai tag dei film. L'algoritmo K-Means assegna quindi ciascun film a uno dei cluster in base alla vicinanza nello spazio delle feature.\\
+Una volta completato il clustering, i risultati vengono associati ai film utilizzando il loro indice comune. Questo consente di arricchire il dataset originale dei film con le informazioni sul cluster di appartenenza, integrando dettagli utili per il sistema di raccomandazione.
+\\I risultati finali vengono esportati in tre file separati.\\
+Il primo, \textbf{kmeans-cluster-centers.csv}, è un file che contiene le coordinate dei centroidi calcolati dall'algoritmo di clustering K-Means.\\Il secondo, \textbf{movies-with-clusters.csv},  contiene i risultati del clustering con informazioni sui film.\\Il terzo, \textbf{feature-matrix.csv} è una matrice che rappresenta le caratteristiche numeriche dei film, utilizzata per il clustering, dove ogni riga rappresenta un film mentre ogni colonna una caratteristica.\\
+Il processo si conclude con un messaggio di conferma che informa che il clustering è stato completato e i risultati sono stati salvati. Questo approccio assicura un'integrazione fluida del modello K-Means nel sistema, consentendo di segmentare il dataset MovieLens in modo efficace e scalabile.
 \section{Integrazione con il sistema}
 \subsection{Architettura e Funzionalità Principali}
 \subsection{Logica Implementata: }
