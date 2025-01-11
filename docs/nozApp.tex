@@ -27,7 +27,7 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\includegraphics[height=1.2cm]{logo.jpg}}
+\fancyhead[L]{\includegraphics[height=1.2cm]{./grafici/logo.jpg}}
 \fancyhead[C]{\footnotesize Laurea Triennale in Informatica - Università di Salerno\\
 Corso di Fondamenti di Intelligenza Artificiale -- Professore  F. Palomba}
 \fancyfoot[C]{\thepage}
@@ -42,7 +42,7 @@ Corso di Fondamenti di Intelligenza Artificiale -- Professore  F. Palomba}
 
 % Logo e titolo
 \begin{center}
-    \includegraphics[width=0.2\textwidth]{logo.jpg}\\[0.5cm]
+    \includegraphics[width=0.2\textwidth]{./grafici/logo.jpg}\\[0.5cm]
     \textbf{\large Laurea Triennale in Informatica - Università di Salerno}\\
     \textbf{\large Corso di Fondamenti di Intelligenza Artificiale}\\
     \textbf{\large Professore F. Palomba}\\[1.5cm]
@@ -291,7 +291,7 @@ movies_df = movies_df[movies_df['movieId'].isin(tagged_movie_ids)]
 			\begin{enumerate}
    			 \item \textbf{Codifica dei generi cinematografici} \\
 				I generi dei film, originariamente rappresentati come stringhe separate da pipe,  vengono convertiti in una lista e successivamente codificati in variabili binarie utilizzando "MultiLabelBinarizer". Il risultato è un DataFrame (genres-encoded) che associa a ciascun "movieId" un vettore binario rappresentante i generi.
-						%\includegraphics[]{./ScreenScript/1.png}
+					
 \begin{verbatim}
 movies_df['genres_list'] = movies_df['genres'].apply(lambda x: x.split('|'))
 mlb = MultiLabelBinarizer()
@@ -312,10 +312,6 @@ tag_relevance = final_dataset.groupby(['movieId', 'tag'])['relevance']
 								\item \textbf{Gestione dei valori mancanti: } le posizioni vuote vengono riempite con il valore "0" utilizzando "fillna(0)".
 								\item \textbf{Filtraggio degli indici: } Si assicura che i film presenti nella matrice abbiano corripondenza nei dati originali (movies-df).
 							\end{itemize}
-
-						%\begin{center}
-						% \includegraphics[]{./ScreenScript/3.png}
-						%\end{center}
 \begin{verbatim}
 feature_matrix = 
 			pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).fillna(0)
@@ -471,7 +467,6 @@ Di seguito è riportato uno screenshot del codice dello script backend descritto
     \includegraphics[]{./grafici/backend.png}
 \end{center}
 Il modulo backend è stato progettato per essere modulare e scalabile. Grazie all'utilizzo di dataset pre-elaborati e algoritmi efficienti, il sistema garantisce prestazioni elevate anche su dataset di grandi dimensioni. Il servizio è facilmente integrabile con applicazioni frontend grazie alla semplicità dell'\textbf{API RESTful}.
-
 \section{Informazioni sul progetto}
 	\subsection{Membri del Progetto}
 	Il seguente progetto è stato realizzato da:  
@@ -497,7 +492,6 @@ Il codice completo del progetto è disponibile nella repository GitHub a questo 
 \item \textbf{PEAS:} Modello per descrivere le specifiche di un agente intelligente, comprendendo Performance, Environment, Actuators e Sensors.
 \item \textbf{API:} Interfaccia che consente a software diversi di comunicare tra loro.
 \item \textbf{TMDb (The Movie Database):} Database online che offre informazioni su film, serie TV e cast.
-\item \textbf{User onboarding:} Processo iniziale per guidare e raccogliere informazioni sugli utenti al primo utilizzo di un sistema.
 \item \textbf{Clustering:} Tecnica di machine learning che raggruppa dati simili in cluster basati su caratteristiche condivise.
 \item \textbf{MovieLens:} Dataset ampiamente utilizzato per esperimenti di sistemi di raccomandazione, contenente dati su film e valutazioni.
 \item \textbf{Dataset:} Collezione di dati strutturati utilizzati per analisi o addestramento di algoritmi.
