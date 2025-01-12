@@ -44,6 +44,10 @@ tag_relevance = final_dataset.groupby(['movieId', 'tag'])['relevance'].mean().un
 feature_matrix = pd.concat([genres_encoded, tag_relevance], axis=1, sort=False).fillna(0)
 feature_matrix = feature_matrix.loc[feature_matrix.index.intersection(movies_df['movieId'])]
 
+# Filtra feature_matrix per includere solo i movieId validi presenti in links_df
+valid_movie_ids = links_df['movieId']
+feature_matrix = feature_matrix.loc[feature_matrix.index.intersection(valid_movie_ids)]
+
 # Step 5: Clustering con KMeans
 num_clusters = 4
 kmeans = KMeans(n_clusters=num_clusters, random_state=42)
