@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from scipy.spatial.distance import cdist
 from fastapi.middleware.cors import CORSMiddleware
+import requests
 
 app = FastAPI()
 
@@ -17,10 +18,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Carica i file generati
-movies_with_clusters = pd.read_csv('movies_with_clusters.csv')
-feature_matrix = pd.read_csv('feature_matrix.csv', index_col=0)
-kmeans_centroids = pd.read_csv('kmeans_cluster_centers.csv', header=None).values  # Carica i centroidi
+# URL remoti dei file CSV
+URL_MOVIES = "https://drive.google.com/file/d/1SBmmROivZtFDeFdozoChXNWrIxZvLzrV/view?usp=drive_link"
+URL_FEATURES = "https://drive.google.com/file/d/1vEKewdJvJ3fItcTlIx_3TcJonFpufCn8/view?usp=drive_link"
+URL_CENTROIDS = "https://drive.google.com/file/d/1AQ4IeSc_STefqFlmYkBTsU7q25Kvh2LK/view?usp=drive_link"
+
+# Funzione per scaricare i file CSV
+def download_csv(url):
+    response = requests.get(url)
+    response.raise_for_status()  # Genera un errore se il download fallisce
+    return pd.read_csv(pd.compat.StringIO(response.text))
+
+# Scarica i file CSV
+movies_with_clusters = download_csv(URL_MOVIES)
+feature_matrix = download_csv(URL_FEATURES)
+kmeans_centroids = download_csv(URL_CENTROIDS).values
+
+print("File CSV scaricati con successo.")
 
 # Modello per l'input
 class RecommendRequest(BaseModel):
