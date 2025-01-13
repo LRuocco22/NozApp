@@ -6,6 +6,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from fastapi.middleware.cors import CORSMiddleware
 import requests
+from io import StringIO  # Importa StringIO per gestire stringhe come file
 
 app = FastAPI()
 
@@ -18,16 +19,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# URL remoti dei file CSV
-URL_MOVIES = "https://drive.google.com/file/d/1SBmmROivZtFDeFdozoChXNWrIxZvLzrV/view?usp=drive_link"
-URL_FEATURES = "https://drive.google.com/file/d/1vEKewdJvJ3fItcTlIx_3TcJonFpufCn8/view?usp=drive_link"
-URL_CENTROIDS = "https://drive.google.com/file/d/1AQ4IeSc_STefqFlmYkBTsU7q25Kvh2LK/view?usp=drive_link"
+# URL dei file CSV su Google Drive
+URL_MOVIES = "https://drive.google.com/uc?id=1SBmmROivZtFDeFdozoChXNWrIxZvLzrV&export=download"
+URL_FEATURES = "https://drive.google.com/uc?id=1vEKewdJvJ3fItcTlIx_3TcJonFpufCn8&export=download"
+URL_CENTROIDS = "https://drive.google.com/uc?id=1AQ4IeSc_STefqFlmYkBTsU7q25Kvh2LK&export=download"
 
 # Funzione per scaricare i file CSV
 def download_csv(url):
     response = requests.get(url)
     response.raise_for_status()  # Genera un errore se il download fallisce
-    return pd.read_csv(pd.compat.StringIO(response.text))
+    return pd.read_csv(StringIO(response.text))
 
 # Scarica i file CSV
 movies_with_clusters = download_csv(URL_MOVIES)
